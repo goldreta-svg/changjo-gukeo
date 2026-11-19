@@ -82,7 +82,7 @@ body{min-height:100vh;-webkit-user-select:none;user-select:none}
 }
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#33302c;color:#fff;padding:12px 18px;border-radius:14px;font-size:16px;line-height:1.45;max-width:90vw;text-align:center;z-index:99;opacity:0;transition:opacity .3s;pointer-events:none}.toast.on{opacity:.95}
 @media print{.toast{display:none}}
-@media (max-width:640px){:root{--lab:26%;--gap:6px}.cols{font-size:12px}.row{padding:8px;border-radius:12px}.tool span{display:none}}
+@media (max-width:640px){:root{--lab:26%;--gap:6px}.cols{font-size:12px}.row{padding:8px;border-radius:12px}.tool span{display:none}.tool #soundTxt{display:inline}}
 </style>
 </head>
 <body>
@@ -158,8 +158,17 @@ function say(t){
 document.getElementById("sound").onclick=()=>{
   soundOn=!soundOn; document.getElementById("wave").style.display=soundOn?"":"none";
   document.getElementById("soundTxt").textContent=soundOn?"소리 켜짐":"소리 꺼짐";
-  if(soundOn) say("소리를 켰어요."); else {if(HAS_TTS) speechSynthesis.cancel(); toast("소리를 껐어요. 다시 누르면 켜져요.");}
+  if(soundOn){ say("소리를 켰어요."); diag(); } else {if(HAS_TTS) speechSynthesis.cancel(); toast("소리를 껐어요. 다시 누르면 켜져요.");}
 };
+function diag(){
+  if(!HAS_TTS){toast("점검: 이 브라우저는 읽어주기 기능이 없어요."); return;}
+  const vs=speechSynthesis.getVoices(), ko=vs.filter(v=>/^ko/i.test(v.lang));
+  const head="점검: 목소리 "+vs.length+"개 · 한국어 "+(ko.length?ko.map(v=>v.name).join(", "):"없음");
+  const u=say.u; let st="대기";
+  const show=()=>toast(head+" · 읽기 "+st);
+  if(u){u.addEventListener("start",()=>{st="시작됨";show();}); u.addEventListener("end",()=>{st="끝남";show();}); u.addEventListener("error",e=>{st="오류("+e.error+")";show();});}
+  show(); setTimeout(()=>{if(st==="대기") show();},2500);
+}
 // ---------------------------------------------------------------- geometry helpers
 function el(n,a,p){const e=document.createElementNS(NS,n); for(const k in a) e.setAttribute(k,a[k]); if(p) p.appendChild(e); return e;}
 function plen(P){let L=0;for(let i=1;i<P.length;i++)L+=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);return L;}
